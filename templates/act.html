@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Акт передвижки{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    <h1>Перемещение имущества</h1>
+    <form method="POST" action="{{ url_for('act') }}">
+        <h3>Выберите имущество для перемещения:</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Название</th>
+                    <th>Количество</th>
+                    <th>Инв. Номер</th>
+                    <th>Текущий кабинет</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td><input type="checkbox" name="selected_items" value="{{ item['id'] }}"></td>
+                    <td>{{ item['name'] }}</td>
+                    <td>{{ item['quantity'] }}</td>
+                    <td>{{ item['inventory'] }}</td>
+                    <td>{{ current_room_names[item['id']] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <h3>Выберите новый кабинет:</h3>
+        <select name="new_room_id" required>
+            {% for room in rooms %}
+            <option value="{{ room['id'] }}">{{ room['name'] }}</option>
+            {% endfor %}
+        </select>
+        <h3>Ответственный за перемещение:</h3>
+        <input type="text" name="mover" required>
+        <h3>Зам. директора по ОВ:</h3>
+        <input type="text" name="deputy_director" required>
+        <button type="submit">Переместить имущество</button>
+    </form>
+    <a href="{{ url_for('index') }}" class="back-button">Назад</a>
+</div>
+<a href="{{ url_for('documents') }}">Посмотреть загруженные документы</a>
+
+{% endblock %}

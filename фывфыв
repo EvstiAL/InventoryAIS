@@ -1,0 +1,187 @@
+
+    <ul>
+        {% for p in items %}
+            <li>
+                <div class = 'list-inventory'>
+                   <p>
+                      Наименование: {{ p.name }} Количество: {{ p.quantity }} Инв. Номер {{ p.inventory}}
+                   </p> 
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+
+
+
+
+    <style>
+        /* Стили для мобильных устройств */
+        @media (max-width: 767px) {
+            body {
+                
+                font-size: 16px;
+            }
+            .container {
+                padding: 10px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            h2 {
+                font-size: 20px;
+            }
+            table {
+                font-size: 14px;
+            }
+            input, button {
+                font-size: 16px;
+            }
+        }
+        
+        /* Стили для десктопных устройств */
+        @media (min-width: 768px) {
+            body {
+                font-size: 18px;
+            }
+            .container {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 36px;
+            }
+            h2 {
+                font-size: 24px;
+            }
+            table {
+                font-size: 16px;
+            }
+            input, button {
+                font-size: 18px;
+            }
+        }
+        
+        /* Общие стили */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+        }
+        nav ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+        nav ul li {
+            margin-right: 20px;
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+        }
+        footer {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+        }
+    </style>
+
+
+
+
+    <style>
+        /* Стили для мобильных устройств */
+        @media (max-width: 767px) {
+            body {
+                
+                font-size: 16px;
+            }
+            .container {
+                padding: 10px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            h2 {
+                font-size: 20px;
+            }
+            table {
+                font-size: 14px;
+            }
+            input, button {
+                font-size: 16px;
+            }
+        }
+        
+        /* Стили для десктопных устройств */
+        @media (min-width: 768px) {
+            body {
+                font-size: 18px;
+            }
+            .container {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 36px;
+            }
+            h2 {
+                font-size: 24px;
+            }
+            table {
+                font-size: 16px;
+            }
+            input, button {
+                font-size: 18px;
+            }
+        }
+        
+        /* Общие стили */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+        }
+        nav ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+        nav ul li {
+            margin-right: 20px;
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+        }
+        footer {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+        }
+    </style>

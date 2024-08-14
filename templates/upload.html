@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block title %}Загрузка документа{% endblock %}
+
+{% block content %}
+    <h1>Загрузить PDF документ</h1>
+    <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".pdf" required>
+        <input type="submit" value="Загрузить">
+    </form>
+    <a href="{{ url_for('documents') }}">Посмотреть загруженные документы</a>
+{% endblock %}

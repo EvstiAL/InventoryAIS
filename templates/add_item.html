@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Добавить имущество{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1>Добавить имущество в {{ room.name }}</h1>
+        <form method="POST" class="add-item-form">
+            <label for="name">Название имущества:</label>
+            <input type="text" id="name" name="name" required>
+            <label for="quantity">Количество:</label>
+            <input type="number" id="quantity" name="quantity" required>
+            <label for="inventory">Инв. номер:</label>
+            <input type="text" id="inventory" name="inventory" required>
+            <label for="type">Тип имущества:</label>
+            <select id="type" name="type" required>
+                <option value="балансное">Балансное</option>
+                <option value="небалансное">Небалансное</option>
+            </select>
+            <label for="category">Тип имущества:</label>
+            <select id="category" name="category" required>
+                <option value="Системные блоки">Системные блоки</option>
+                <option value="Оргтехника">Оргтехника</option>
+                <option value="Мониторы">Мониторы</option>
+                <option value="Столы">Столы</option>
+                <option value="Парты">Парты</option>
+                <option value="Шкафы">Шкафы</option>
+                <option value="Стулья">Стулья</option>
+                <option value="Другое">Другое</option>
+            </select>
+            <button type="submit">Добавить</button>
+        </form>
+        <a href="{{ url_for('room', room_id=room.id) }}" class="back-button">Назад</a>
+    </div>
+{% endblock %}

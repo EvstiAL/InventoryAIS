@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Документы{% endblock %}
+
+{% block content %}
+<h1>Загруженные документы</h1>
+    <a href="{{ url_for('savedoc') }}">Загрузить новый документ</a>
+    <ul>
+        {% for file in files %}
+        <li>
+            <a href="{{ url_for('view_document', filename=file) }}">{{ file }}</a>
+            <form method="POST" action="{{ url_for('delete_file', filename=file) }}" style="display:inline;">
+                <button type="submit" onclick="return confirm('Вы уверены, что хотите удалить этот файл?');">Удалить</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul>
+            {% for category, message in messages %}
+                <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+{% endblock %}

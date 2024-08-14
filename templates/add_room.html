@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Добавить кабинет{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1>Добавить кабинет</h1>
+        <form method="POST" class="add-room-form">
+            <label for="name">Название кабинета:</label>
+            <input type="text" id="name" name="name" required>
+            <button type="submit">Добавить</button>
+        </form>
+        <a href="{{ url_for('index') }}" class="back-button">Назад</a>
+    </div>
+{% endblock %}

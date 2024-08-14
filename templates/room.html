@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Кабинет: {{ room['name'] }}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1>{{ room['name'] }}</h1>
+        <a href="{{ url_for('add_item', room_id=room['id']) }}" class="add-item-button">Добавить имущество</a>
+        <button onclick="printCard()" class="print-button no-print">Печать карточки кабинета</button>
+        
+        <div class="card" id="printableCard">
+            <div class="print-header">Администрация МБОУ СШ № 41</div> <!-- Шапка -->
+            <h2>Карточка кабинета</h2>
+            <p><strong>Название:</strong> {{ room['name'] }}</p>
+            <p><strong>Ответственный:</strong> </p>
+            <h3>Имущество:</h3>
+            <form method="POST" action="{{ url_for('delete_selected_items', room_id=room['id']) }}">
+                <table>
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Категория</th>
+                            <th>Название</th>
+                            <th>Количество</th>
+                            <th>Инв. Номер</th>
+                            <th>Тип имущества</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td><input type="checkbox" name="selected_items" value="{{ item['id'] }}"></td>
+                            <td>{{ item['category'] }}</td>
+                            <td>{{ item['name'] }}</td>
+                            <td>{{ item['quantity'] }}</td>
+                            <td>{{ item['inventory'] }}</td>
+                            <td>{{ item['type'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <button type="submit" class="delete-button">Удалить выделенные</button>
+            </form>
+            
+            <div class="approval">Заместитель по ОВ: ___________________ {{otv}}</div>
+            <div class="approval">Ответственный: ___________________</div>
+        </div>
+
+        <a href="{{ url_for('index') }}" class="back-button">Назад</a>
+    </div>
+
+    <script>
+        function printCard() {
+            var printContents = document.getElementById('printableCard').innerHTML;
+            var originalContents = document.body.innerHTML;
+
+            document.body.innerHTML = printContents;
+            window.print();
+            document.body.innerHTML = originalContents;
+            location.reload(); // Перезагружаем страницу, чтобы восстановить исходное содержимое
+        }
+    </script>
+
+{% endblock %}

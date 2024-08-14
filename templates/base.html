@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel = 'stylesheet' href = '../static/css/style.css'>
+    <title>{% block title %}{% endblock %} - Инвентаризация кабинетов</title>
+
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('index') }}">Главная</a></li>
+                <li><a href="{{ url_for('login') }}">Вход</a></li>
+                <li><a href="{{ url_for('register') }}">Регистрация</a></li>
+                <li><a href="{{ url_for('documents') }}">Документы</a></li>
+                <li><a href="{{ url_for('act') }}">Создать акт передвижки</a></li>
+                <li><a href="{{ url_for('allin') }}">Общая ведомость имущества</a></li>
+            </ul>
+        </nav>
+        <div class="user-info">
+            {% if session.username %}
+                <span>Добро пожаловать, {{ session.username }}!</span>
+                <a href="{{ url_for('logout') }}">Выйти</a>
+            {% else %}
+                <span>Вы не вошли в систему</span>
+            {% endif %}
+        </div>
+    </header>
+    
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+    
+    <footer>
+        &copy; 2024 АИС "Инвентаризация кабинетов." МБОУ СШ № 41 Все права защищены.
+    </footer>
+</body>
+</html>
