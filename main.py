@@ -3,13 +3,17 @@ import sqlite3
 import os
 from fpdf import FPDF
 from datetime import datetime
+from clean import start_console_cleanup_scheduler
+
+
+
 
 app = Flask(__name__)
 app.secret_key = 'kljsdhfpiauhpk1j23ho12831h3k1jh2398712h3k1j23'
 
-
+start_console_cleanup_scheduler(interval_minutes=20)
 UPLOAD_FOLDER = 'uploads/'
-ALLOWED_EXTENSIONS = {'pdf'}
+ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -218,6 +222,7 @@ def act():
         new_room_id = request.form['new_room_id']
         mover = request.form['mover']
         deputy_director = request.form['deputy_director']
+        seler = request.form['seler']
 
         if item_ids:
             conn = get_db_connection()
@@ -271,8 +276,10 @@ def act():
                 pdf.cell(40, 10, item['room_name'], 1, 1)
 
             pdf.ln(10)
-            pdf.cell(0, 10, f"Ответственный за перемещение: {mover}", 0, 1)
             pdf.cell(0, 10, f"Зам. директора по ОВ: {deputy_director}", 0, 1)
+            pdf.cell(0, 10, f"Лицо, передающее имущество: _________________ {mover}", 0, 1)
+            
+            pdf.cell(0, 10, f"Принял: ____________ {seler}", 0, 1)
 
             pdf_filename = f"акт_о_перемещении_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
             pdf.output(os.path.join(app.config['UPLOAD_FOLDER'], pdf_filename))
