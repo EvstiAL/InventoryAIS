@@ -11,6 +11,7 @@ from clean import start_console_cleanup_scheduler
 app = Flask(__name__)
 app.secret_key = 'kljsdhfpiauhpk1j23ho12831h3k1jh2398712h3k1j23'
 
+
 start_console_cleanup_scheduler(interval_minutes=20)
 UPLOAD_FOLDER = 'uploads/'
 ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx'}
@@ -61,6 +62,19 @@ def init_db():
         )
     ''')
     cursor.execute('''
+        CREATE TABLE IF NOT EXISTS deleted (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            quantity INTEGER NOT NULL,
+            inventory INTEGER NOT NULL,
+            type TEXT NOT NULL,
+            category TEXT NOT NULL,
+            room_id INTEGER,
+            mean TEXT NOT NULL,
+            note TEXT NOT NULL
+        )
+    ''')
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
@@ -81,6 +95,9 @@ def get_user_by_username(username):
     user = cursor.fetchone()
     conn.close()
     return user
+
+
+
 
 
 @app.route('/')
@@ -156,6 +173,28 @@ def add_room():
         return redirect(url_for('index'))
     return render_template('add_room.html')
 
+@app.route('/itemOfRoom~<int:room_id>/<int:item_id>', methods = ['POST', 'GET'])
+def item(item_id, room_id):
+    conn = get_db_connection()
+    room = conn.execute('SELECT * FROM room WHERE id = ?', (room_id,)).fetchone()
+    items = conn.execute('SELECT * FROM item WHERE id = ?', (item_id,)).fetchone()
+    conn.close()
+    if request.method == 'POST':
+        name = request.form['name']
+        quantity = request.form['quantity']
+        inventory = request.form['inventory']
+        types = request.form['type']
+        category = request.form['category']
+        conn = get_db_connection()
+        conn.execute('UPDATE item SET name = ?, quantity = ?, inventory = ?, type = ?, category = ? WHERE id = ? ', (name, quantity, inventory, types, category, item_id))
+        conn.commit()
+        conn.close()
+        return redirect(url_for('room', room_id=room_id))
+        
+    
+
+    return render_template('card_item.html', items=items, room = room)
+
 @app.route('/add_item/<int:room_id>', methods=['GET', 'POST'])
 def add_item(room_id):
     connect = get_db_connection()
@@ -215,7 +254,7 @@ def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 
-@app.route('/act', methods=['GET', 'POST'])
+@app.route('/act/move', methods=['GET', 'POST'])
 def act():
     if request.method == 'POST':
         item_ids = request.form.getlist('selected_items')
@@ -303,6 +342,86 @@ def act():
 
     return render_template('act.html', rooms=rooms, items=items, current_room_names=current_room_names)
 
+
+@app.route('/act/write_off', methods=['GET', 'POST'])
+def write_off():
+    if request.method == 'POST':
+        item_ids = request.form.getlist('selected_items')
+        mean_spis = request.form['mean_spis']
+        note = request.form['note']
+        mover = request.form['mover']
+        deputy_director = request.form['deputy_director']
+        seler = request.form['seler']
+
+        if item_ids:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+
+            # Fetch details of the items being written off, including room names
+            cursor.execute("""
+                SELECT i.*, r.name AS room_name 
+                FROM item i 
+                JOIN room r ON i.room_id = r.id 
+                WHERE i.id IN ({})
+            """.format(','.join('?' * len(item_ids))), item_ids)
+            items = cursor.fetchall()
+
+            # Move items to the deleted table
+            for item in items:
+                cursor.execute('''
+                    INSERT INTO deleted (name, quantity, inventory, type, category, room_id, mean, note)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (item['name'], item['quantity'], item['inventory'], item['type'], item['category'], item['room_id'], mean_spis, note))
+
+            # Delete the items from the item table
+            cursor.execute("DELETE FROM item WHERE id IN ({})".format(','.join('?' * len(item_ids))), item_ids)
+            conn.commit()
+
+            # Create PDF document
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.add_font("timesnewromanpsmt", "", "./static/timesnewromanpsmt.ttf", uni=True)
+            pdf.set_font("timesnewromanpsmt", size=14)
+
+            pdf.cell(0, 10, "Акт о списании имущества", 0, 1, 'C')
+            pdf.cell(0, 10, f"Дата: {datetime.now().strftime('%d.%m.%Y')}", 0, 1)
+            pdf.cell(0, 10, "Списанное имущество:", 0, 1)
+
+            pdf.cell(40, 10, "Название", 1)
+            pdf.cell(20, 10, "Кол-во", 1)
+            pdf.cell(40, 10, "Инв. Номер", 1)
+            pdf.cell(40, 10, "Кабинет", 1, 1)
+
+            for item in items:
+                pdf.cell(40, 10, item['name'], 1)  # Ensure 'name' is correct
+                pdf.cell(20, 10, str(item['quantity']), 1)
+                pdf.cell(40, 10, str(item['inventory']), 1)
+                pdf.cell(40, 10, item['room_name'], 1, 1)  # Use room_name instead of room_id
+
+            pdf.ln(10)
+            pdf.cell(0, 10, f"Зам. директора по ОВ: {deputy_director}", 0, 1)
+            pdf.cell(0, 10, f"Лицо, передающее имущество: _________________ {mover}", 0, 1)
+            pdf.cell(0, 10, f"Принял: ____________ {seler}", 0, 1)
+
+            pdf_filename = f"акт_о_списании_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
+            pdf.output(os.path.join(app.config['UPLOAD_FOLDER'], pdf_filename))
+
+            flash('Имущество успешно списано и акт создан.', 'success')
+        else:
+            flash('Не выбрано ни одного элемента для списания.', 'error')
+
+        return redirect(url_for('documents'))
+
+    items = get_items()  # Fetch items from the database
+    current_room_names = {}
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    for item in items:
+        cursor.execute("SELECT name FROM room WHERE id = ?", (item['room_id'],))
+        current_room_names[item['id']] = cursor.fetchone()['name']
+    conn.close()    
+    return render_template('write_off.html', items=items, current_room_names=current_room_names)
+
 @app.route('/all_inventory_ved')
 def allin():
     conn = get_db_connection()
@@ -329,7 +448,21 @@ def allin():
     conn.close()
     return render_template('all_im.html', categories=categories, items=items, total_quantity=total_quantity, selected_category=selected_category)
 
+@app.route('/writeOffList')
+def wrofflist():
+    conn = get_db_connection()
+    cursor = conn.cursor()
 
+
+    cursor.execute("SELECT * FROM deleted")
+    
+    items = cursor.fetchall()
+
+    # Подсчет общего количества имущества
+    total_quantity = sum(item['quantity'] for item in items)
+
+    conn.close()
+    return render_template('deleted.html', items=items, total_quantity=total_quantity)
 
 @app.route('/delete/<filename>', methods=['POST'])
 def delete_file(filename):
@@ -369,4 +502,4 @@ if __name__ == '__main__':
         os.makedirs(UPLOAD_FOLDER)
     init_db()
     
-    app.run(host = '0.0.0.0', port = '7777', debug=True)
+    app.run(host='0.0.0.0', port = '5000', debug=False)

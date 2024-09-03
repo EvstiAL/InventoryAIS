@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Редактор имущества{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Редактор имущества {{ items.name }}</h1>
+    <form method="POST" class="add-item-form">
+        <label for="name">Название имущества:</label>
+        <input type="text" id="name" name="name" value ="{{ items['name'] }}" required>
+        <label for="quantity">Количество:</label>
+        <input type="number" id="quantity" name="quantity" value ="{{items['quantity']}}" required>
+        <label for="inventory">Инв. номер:</label>
+        <input type="text" id="inventory" name="inventory" value ="{{items['inventory']}}" required>
+        <label for="type">Тип имущества:</label>
+        <select id="type" name="type"  required>
+            <option selected = "{{items['type']}}">{{items['type']}}</option>
+            <option value="балансное">Балансное</option>
+            <option value="небалансное">Небалансное</option>
+        </select>
+        <label for="category">Категория:</label>
+        <select id="category" name="category" required>
+            <option selected = "{{ items['category'] }}">{{ items['category'] }}</option>
+            <option value="Системные блоки">Системные блоки</option>
+            <option value="Оргтехника">Оргтехника</option>
+            <option value="Мониторы">Мониторы</option>
+            <option value="Столы">Столы</option>
+            <option value="Парты">Парты</option>
+            <option value="Шкафы">Шкафы</option>
+            <option value="Стулья">Стулья</option>
+            <option value="Другое">Другое</option>
+        </select>
+        <button type="submit">Редактировать</button>
+    </form>
+    <a href="{{ url_for('room', room_id=room.id) }}" class="back-button">Назад</a>
+</div>
+{% endblock %}

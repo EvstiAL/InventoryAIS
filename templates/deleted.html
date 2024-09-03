@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Списанное имущество{% endblock %}
+
+{% block content %}
+<div class="container">
+
+
+    <form method="GET" action="{{ url_for('wrofflist') }}">
+        <button onclick="printCard()" class="print-button no-print">Печать ведомости</button>
+    </form>
+    <div class="card" id="printableCard">
+        <h1>Списанное имущество</h1>
+        <h2>Общее количество имущества: {{ total_quantity }}</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>Количество</th>
+                    <th>Категория</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                    <tr>
+                        <td>{{ item['name'] }}</td>
+                        <td>{{ item['quantity'] }}</td>
+                        <td>{{ item['category'] }}</td>
+                    </tr>
+                {% endfor %}
+                {% if items|length == 0 %}
+                    <tr>
+                        <td colspan="3">Нет данных для отображения</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+<script>
+    function printCard() {
+        var printContents = document.getElementById('printableCard').innerHTML;
+        var originalContents = document.body.innerHTML;
+
+        document.body.innerHTML = printContents;
+        window.print();
+        document.body.innerHTML = originalContents;
+        location.reload(); // Перезагружаем страницу, чтобы восстановить исходное содержимое
+    }
+</script>
+{% endblock %}

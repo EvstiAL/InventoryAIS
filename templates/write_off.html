@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Акт Списания{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    <h1>Списание имущества</h1>
+    <form method="POST" action="{{ url_for('write_off') }}">
+        <h3>Выберите имущество для списания:</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Название</th>
+                    <th>Количество</th>
+                    <th>Инв. Номер</th>
+                    <th>Текущий кабинет</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td><input type="checkbox" name="selected_items" value="{{ item['id'] }}"></td>
+                    <td>{{ item['name'] }}</td>
+                    <td>{{ item['quantity'] }}</td>
+                    <td>{{ item['inventory'] }}</td>
+                    <td>{{ current_room_names[item['id']] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <h3>Причина неисправности:</h3>
+        <select name="mean_spis" required>
+            <option value="Видимый деффект">Видимый деффект</option>
+            <option value="Неисправимый деффект">Неисправимый деффект</option>
+            <option value="Электрическая неисправность">Электрическая неисправность</option>
+            <option value="Внутренний деффект ">Внутренний деффект</option>
+            <option value="Другая причина ">Другая причина</option>
+        </select>
+        <h3>Заметки</h3>
+        <input type="text" name = 'note' id = 'note'>
+        <h3>Сдал:____________________</h3>
+        <input type="text" name="mover" required>
+        <h3>Списал:___________________</h3>
+        <input type="text" name="seler" required>
+        <h3>Зам. директора по ОВ:</h3>
+        <input type="text" name="deputy_director" required>
+        <button type="submit">Списать имущество</button>
+    </form>
+    <a href="{{ url_for('index') }}" class="back-button">Назад</a>
+</div>
+<a href="{{ url_for('documents') }}">Посмотреть загруженные документы</a>
+
+{% endblock %}

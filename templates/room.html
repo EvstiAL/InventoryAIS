@@ -31,7 +31,7 @@
                         <tr>
                             <td><input type="checkbox" name="selected_items" value="{{ item['id'] }}"></td>
                             <td>{{ item['category'] }}</td>
-                            <td>{{ item['name'] }}</td>
+                            <td><a href = "{{url_for('item', room_id=room['id'],  item_id = item['id'])}}">{{ item['name'] }}</a></td>
                             <td>{{ item['quantity'] }}</td>
                             <td>{{ item['inventory'] }}</td>
                             <td>{{ item['type'] }}</td>
@@ -57,7 +57,7 @@
             document.body.innerHTML = printContents;
             window.print();
             document.body.innerHTML = originalContents;
-            location.reload(); // Перезагружаем страницу, чтобы восстановить исходное содержимое
+            location.reload();
         }
     </script>
 
