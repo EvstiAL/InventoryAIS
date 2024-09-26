@@ -8,6 +8,8 @@
         <form method="POST" class="add-room-form">
             <label for="name">Название кабинета:</label>
             <input type="text" id="name" name="name" required>
+            <label for="floor">Этаж:</label>
+            <input type="number" id="floor" name="floor" required>
             <button type="submit">Добавить</button>
         </form>
         <a href="{{ url_for('index') }}" class="back-button">Назад</a>

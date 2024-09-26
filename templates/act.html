@@ -6,6 +6,11 @@
 
 <div class="container">
     <h1>Перемещение имущества</h1>
+    
+    <!-- Search Input for Inventory Number -->
+    <h3>Поиск по инвентарному номеру:</h3>
+    <input type="text" id="inventorySearch" placeholder="Введите инвентарный номер" onkeyup="filterItems()">
+
     <form method="POST" action="{{ url_for('act') }}">
         <h3>Выберите имущество для перемещения:</h3>
         <table>
@@ -18,34 +23,58 @@
                     <th>Текущий кабинет</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="itemsBody">
                 {% for item in items %}
-                <tr>
+                <tr class="item-row">
                     <td><input type="checkbox" name="selected_items" value="{{ item['id'] }}"></td>
                     <td>{{ item['name'] }}</td>
                     <td>{{ item['quantity'] }}</td>
-                    <td>{{ item['inventory'] }}</td>
+                    <td class="inventory-number">{{ item['inventory'] }}</td> <!-- Add class for filtering -->
                     <td>{{ current_room_names[item['id']] }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+
         <h3>Выберите новый кабинет:</h3>
         <select name="new_room_id" required>
             {% for room in rooms %}
             <option value="{{ room['id'] }}">{{ room['name'] }}</option>
             {% endfor %}
         </select>
+
         <h3>Лицо, передающее имущество:</h3>
         <input type="text" name="mover" required>
+
         <h3>Лицо, принимающее имущество:</h3>
         <input type="text" name="seler" required>
+
         <h3>Зам. директора по ОВ:</h3>
         <input type="text" name="deputy_director" required>
+
         <button type="submit">Переместить имущество</button>
     </form>
+
     <a href="{{ url_for('index') }}" class="back-button">Назад</a>
 </div>
+
 <a href="{{ url_for('documents') }}">Посмотреть загруженные документы</a>
+
+<script>
+// Function to filter items based on inventory number
+function filterItems() {
+    const input = document.getElementById('inventorySearch').value.toLowerCase();
+    const rows = document.querySelectorAll('.item-row');
+
+    rows.forEach(row => {
+        const inventoryCell = row.querySelector('.inventory-number'); // Select the inventory number cell
+        if (inventoryCell) {
+            const textValue = inventoryCell.textContent || inventoryCell.innerText;
+            // Show row if inventory number matches the input
+            row.style.display = textValue.toLowerCase().includes(input) ? '' : 'none';
+        }
+    });
+}
+</script>
 
 {% endblock %}

@@ -5,8 +5,7 @@
 {% block content %}
 <div class="container">
 
-
-    <form method="GET" action="{{ url_for('allin') }}">
+    <form method="GET" action="{{ url_for('allin') }}" id="filterForm">
         <label for="category">Фильтр по категории:</label>
         <select name="category" id="category" onchange="this.form.submit()">
             <option value="">Все категории</option>
@@ -14,12 +13,18 @@
                 <option value="{{ category }}" {% if selected_category == category %}selected{% endif %}>{{ category }}</option>
             {% endfor %}
         </select>
+
+        <label for="search_name">Поиск по названию:</label>
+        <input type="text" name="search_name" id="search_name" placeholder="Введите название" onkeyup="filterItems()" value="{{ search_name }}">
+
+        <button type="submit" class="search-button">Поиск</button>
         <button onclick="printCard()" class="print-button no-print">Печать ведомости</button>
     </form>
+
     <div class="card" id="printableCard">
         <h1>Сводная ведомость имущества</h1>
         <h2>Общее количество имущества: {{ total_quantity }}</h2>
-        <table>
+        <table id="itemsTable">
             <thead>
                 <tr>
                     <th>Название</th>
@@ -27,9 +32,9 @@
                     <th>Категория</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="itemsBody">
                 {% for item in items %}
-                    <tr>
+                    <tr class="item-row">
                         <td>{{ item['name'] }}</td>
                         <td>{{ item['quantity'] }}</td>
                         <td>{{ item['category'] }}</td>
@@ -52,7 +57,22 @@
         document.body.innerHTML = printContents;
         window.print();
         document.body.innerHTML = originalContents;
-        location.reload(); // Перезагружаем страницу, чтобы восстановить исходное содержимое
+        location.reload();
+    }
+
+    function filterItems() {
+        const input = document.getElementById('search_name').value.toLowerCase();
+        const rows = document.querySelectorAll('.item-row');
+
+        rows.forEach(row => {
+            const cells = row.getElementsByTagName('td');
+            const nameCell = cells[0];
+            if (nameCell) {
+                const textValue = nameCell.textContent || nameCell.innerText;
+                row.style.display = textValue.toLowerCase().includes(input) ? '' : 'none';
+            }
+        });
     }
 </script>
+
 {% endblock %}

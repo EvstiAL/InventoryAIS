@@ -6,17 +6,18 @@
     <div class="dashboard-container">
         <h1>Кабинеты</h1>
         <a href="{{ url_for('add_room') }}" class="add-room-button">Добавить кабинет</a>
-        <div class="rooms-list">
-            {% for room in rooms %}
-                <div class="room-card">
-                    <a href="{{ url_for('room', room_id=room.id) }}" class="room-link">{{ room.name }}</a>
-                </div>
-            {% endfor %}
-        </div>
+        
+        {% for floor, rooms in rooms_by_floor.items() %}
+            <h2>Этаж {{ floor }}</h2>
+            <div class="rooms-list">
+                {% for room in rooms %}
+                    <div class="room-card">
+                        <a href="{{ url_for('room', room_id=room['id']) }}" class="room-link">{{ room['name'] }}</a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+        
         <a href="{{ url_for('logout') }}" class="logout-button">Выйти из системы</a>
     </div>
 {% endblock %}
-
-<style>
-    
-</style>

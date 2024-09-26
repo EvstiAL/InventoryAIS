@@ -4,14 +4,17 @@
 
 {% block content %}
     <div class="container">
-        <h1>{{ room['name'] }}</h1>
+        <h1>
+            <input type="text" id="roomNameInput" value="{{ room['name'] }}" onchange="updateRoomName()" style="border: none; font-size: 24px;">
+            <i class="fas fa-pencil-alt" onclick="document.getElementById('roomNameInput').focus();" style="cursor: pointer; margin-left: 10px; color:black " title="Редактировать название кабинета"></i>
+        </h1>
         <a href="{{ url_for('add_item', room_id=room['id']) }}" class="add-item-button">Добавить имущество</a>
         <button onclick="printCard()" class="print-button no-print">Печать карточки кабинета</button>
         
         <div class="card" id="printableCard">
             <div class="print-header">Администрация МБОУ СШ № 41</div> <!-- Шапка -->
             <h2>Карточка кабинета</h2>
-            <p><strong>Название:</strong> {{ room['name'] }}</p>
+            <p><strong>Название:</strong> <span id="roomNameDisplay">{{ room['name'] }}</span></p>
             <p><strong>Ответственный:</strong> </p>
             <h3>Имущество:</h3>
             <form method="POST" action="{{ url_for('delete_selected_items', room_id=room['id']) }}">
@@ -31,7 +34,7 @@
                         <tr>
                             <td><input type="checkbox" name="selected_items" value="{{ item['id'] }}"></td>
                             <td>{{ item['category'] }}</td>
-                            <td><a href = "{{url_for('item', room_id=room['id'],  item_id = item['id'])}}">{{ item['name'] }}</a></td>
+                            <td><a href="{{ url_for('item', room_id=room['id'], item_id=item['id']) }}">{{ item['name'] }}</a></td>
                             <td>{{ item['quantity'] }}</td>
                             <td>{{ item['inventory'] }}</td>
                             <td>{{ item['type'] }}</td>
@@ -41,7 +44,7 @@
                 </table>
                 <button type="submit" class="delete-button">Удалить выделенные</button>
             </form>
-            
+
             <div class="approval">Заместитель по ОВ: ___________________ {{otv}}</div>
             <div class="approval">Ответственный: ___________________</div>
         </div>
@@ -58,6 +61,30 @@
             window.print();
             document.body.innerHTML = originalContents;
             location.reload();
+        }
+
+        function updateRoomName() {
+            const newRoomName = document.getElementById('roomNameInput').value;
+            const roomId = {{ room['id'] }}; // Get the current room ID from the template
+
+            fetch(`/update_room_name/${roomId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'  // Include CSRF token if using Flask-WTF
+                },
+                body: JSON.stringify({ name: newRoomName })
+            })
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('roomNameDisplay').innerText = newRoomName; // Update displayed name
+                } else {
+                    return response.json().then(errorData => {
+                        alert('Ошибка при обновлении названия кабинета: ' + errorData.error);
+                    });
+                }
+            })
+            .catch(error => console.error('Ошибка:', error));
         }
     </script>
 

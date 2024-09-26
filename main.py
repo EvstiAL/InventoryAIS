@@ -1,14 +1,14 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory, jsonify
 import sqlite3
 import os
 from fpdf import FPDF
 from datetime import datetime
 from clean import start_console_cleanup_scheduler
-
-
+from flask_wtf.csrf import CSRFProtect
 
 
 app = Flask(__name__)
+csrf = CSRFProtect(app)
 app.secret_key = 'kljsdhfpiauhpk1j23ho12831h3k1jh2398712h3k1j23'
 
 
@@ -46,7 +46,8 @@ def init_db():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS room (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL
+            name TEXT NOT NULL,
+            floor TEXT NOT NULL
         )
     ''')
     cursor.execute('''
@@ -104,9 +105,19 @@ def get_user_by_username(username):
 def index():
     if 'username' in session:
         conn = get_db_connection()
+        # Fetch all rooms from the database
         rooms = conn.execute('SELECT * FROM room').fetchall()
         conn.close()
-        return render_template('index.html', rooms=rooms)
+
+        # Group rooms by floor
+        rooms_by_floor = {}
+        for room in rooms:
+            floor = room['floor']  # Assuming room is a dictionary-like object
+            if floor not in rooms_by_floor:
+                rooms_by_floor[floor] = []
+            rooms_by_floor[floor].append(room)
+
+        return render_template('index.html', rooms_by_floor=rooms_by_floor)
     return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -162,16 +173,36 @@ def room(room_id):
 
     return render_template('room.html', room=room, items=items, otv = session['username'])
 
+
+@app.route('/update_room_name/<int:room_id>', methods=['POST'])
+def update_room_name(room_id):
+    data = request.get_json()
+    new_name = data.get('name')
+
+    conn = get_db_connection()
+    conn.execute('UPDATE room SET name = ? WHERE id = ?', (new_name, room_id))
+    conn.commit()
+    conn.close()
+
+    return jsonify({'success': True}), 200
+
 @app.route('/add_room', methods=['GET', 'POST'])
 def add_room():
-    if request.method == 'POST':
-        name = request.form['name']
-        conn = get_db_connection()
-        conn.execute('INSERT INTO room (name) VALUES (?)', (name,))
-        conn.commit()
-        conn.close()
-        return redirect(url_for('index'))
-    return render_template('add_room.html')
+    if 'username' in session:
+        if request.method == 'POST':
+            name = request.form['name']
+            floor = request.form['floor']
+
+            conn = get_db_connection()
+            conn.execute('INSERT INTO room (name, floor) VALUES (?, ?)', (name, floor))
+            conn.commit()
+            conn.close()
+
+            flash('Кабинет успешно добавлен!')
+            return redirect(url_for('index'))
+
+        return render_template('add_room.html')
+    return redirect(url_for('login'))
 
 @app.route('/itemOfRoom~<int:room_id>/<int:item_id>', methods = ['POST', 'GET'])
 def item(item_id, room_id):
@@ -240,7 +271,7 @@ def documents():
     files = os.listdir(app.config['UPLOAD_FOLDER'])
     return render_template('documents.html', files=files)
 
-# Просмотр конкретного документа
+
 @app.route('/view/<filename>')
 def view_document(filename):
     return render_template('view.html', filename=filename)
@@ -248,7 +279,6 @@ def view_document(filename):
 
 
 
-# Маршрут для отображения загруженных документов
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
@@ -269,7 +299,7 @@ def act():
             cursor.execute("SELECT name FROM room WHERE id = ?", (new_room_id,))
             new_room_name = cursor.fetchone()['name']
 
-            # Получение названия старого кабинета для всех перемещаемых элементов
+
             cursor.execute("SELECT DISTINCT room_id FROM item WHERE id IN ({})".format(','.join('?' * len(item_ids))), item_ids)
             old_room_ids = cursor.fetchall()
 
@@ -279,11 +309,11 @@ def act():
                 old_room_names.append(cursor.fetchone()['name'])
 
 
-            # Обновление идентификатора кабинета для выбранных элементов
+         
             cursor.execute("UPDATE item SET room_id = ? WHERE id IN ({})".format(','.join('?' * len(item_ids))), [new_room_id] + item_ids)
             conn.commit()
 
-            # Получение перемещенных элементов
+           
             cursor.execute("SELECT i.name, i.quantity, i.inventory, r.name AS room_name FROM item i JOIN room r ON i.room_id = r.id WHERE i.id IN ({})".format(','.join('?' * len(item_ids))), item_ids)
             moved_items = cursor.fetchall()
 
@@ -331,7 +361,7 @@ def act():
     rooms = get_rooms()
     items = get_items()
 
-    # Получение названий текущих кабинетов для каждого элемента
+    
     current_room_names = {}
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -357,7 +387,7 @@ def write_off():
             conn = get_db_connection()
             cursor = conn.cursor()
 
-            # Fetch details of the items being written off, including room names
+            
             cursor.execute("""
                 SELECT i.*, r.name AS room_name 
                 FROM item i 
@@ -366,18 +396,18 @@ def write_off():
             """.format(','.join('?' * len(item_ids))), item_ids)
             items = cursor.fetchall()
 
-            # Move items to the deleted table
+           
             for item in items:
                 cursor.execute('''
                     INSERT INTO deleted (name, quantity, inventory, type, category, room_id, mean, note)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (item['name'], item['quantity'], item['inventory'], item['type'], item['category'], item['room_id'], mean_spis, note))
 
-            # Delete the items from the item table
+            
             cursor.execute("DELETE FROM item WHERE id IN ({})".format(','.join('?' * len(item_ids))), item_ids)
             conn.commit()
 
-            # Create PDF document
+            
             pdf = FPDF()
             pdf.add_page()
             pdf.add_font("timesnewromanpsmt", "", "./static/timesnewromanpsmt.ttf", uni=True)
@@ -393,10 +423,10 @@ def write_off():
             pdf.cell(40, 10, "Кабинет", 1, 1)
 
             for item in items:
-                pdf.cell(40, 10, item['name'], 1)  # Ensure 'name' is correct
+                pdf.cell(40, 10, item['name'], 1)  
                 pdf.cell(20, 10, str(item['quantity']), 1)
                 pdf.cell(40, 10, str(item['inventory']), 1)
-                pdf.cell(40, 10, item['room_name'], 1, 1)  # Use room_name instead of room_id
+                pdf.cell(40, 10, item['room_name'], 1, 1)  
 
             pdf.ln(10)
             pdf.cell(0, 10, f"Зам. директора по ОВ: {deputy_director}", 0, 1)
@@ -412,7 +442,7 @@ def write_off():
 
         return redirect(url_for('documents'))
 
-    items = get_items()  # Fetch items from the database
+    items = get_items()  
     current_room_names = {}
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -427,14 +457,14 @@ def allin():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Получение всех категорий из базы данных
+    
     cursor.execute("SELECT DISTINCT category FROM item")
     categories = [row['category'] for row in cursor.fetchall()]
 
-    # Определение выбранной категории
+    
     selected_category = request.args.get('category')
 
-    # Получение всех элементов из базы данных с учетом фильтрации
+    
     if selected_category:
         cursor.execute("SELECT * FROM item WHERE category = ?", (selected_category,))
     else:
@@ -442,7 +472,7 @@ def allin():
     
     items = cursor.fetchall()
 
-    # Подсчет общего количества имущества
+    
     total_quantity = sum(item['quantity'] for item in items)
 
     conn.close()
@@ -458,7 +488,7 @@ def wrofflist():
     
     items = cursor.fetchall()
 
-    # Подсчет общего количества имущества
+    
     total_quantity = sum(item['quantity'] for item in items)
 
     conn.close()
@@ -486,7 +516,7 @@ def delete_selected_items(room_id):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Удаление выбранных элементов
+        
         cursor.execute("DELETE FROM item WHERE id IN ({})".format(','.join('?' * len(selected_items))), selected_items)
         conn.commit()
         conn.close()
@@ -495,7 +525,7 @@ def delete_selected_items(room_id):
     else:
         flash('Не выбрано ни одного элемента для удаления.', 'error')
     
-    return redirect(url_for('room', room_id=room_id))  # Перенаправление обратно на страницу кабинета
+    return redirect(url_for('room', room_id=room_id))  
 
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
